@@ -1,3 +1,5 @@
+import polars as pl
+import pandas as pd
 import numpy as np
 from plotly.subplots import make_subplots
 from statsmodels.tsa.stattools import acf, pacf
@@ -22,7 +24,7 @@ def _plot(
                 x=[x, x],
                 y=[0, values[x]],
                 mode="lines",
-                line=dict(color="#3f3f3f"),
+                line=dict(color="#3f3f3f", width=1),
                 showlegend=False,
             ),
             row=row,
@@ -32,7 +34,7 @@ def _plot(
         x=np.arange(len(values)),
         y=values,
         mode="markers",
-        marker_color="#1f77b4",
+        marker_color="black",
         marker_size=6,
         row=row,
         col=col,
@@ -42,7 +44,7 @@ def _plot(
             x=np.arange(len(values)),
             y=confidence_interval[:, 0] - values,
             mode="lines",
-            line=dict(color="rgba(255,255,255,0)"),
+            line=dict(color="rgba(255,255,255,0)", width=1),
             showlegend=False,
         ),
         row=row,
@@ -54,13 +56,14 @@ def _plot(
             y=confidence_interval[:, 1] - values,
             mode="lines",
             fill="tonexty",
-            fillcolor="rgba(32, 146, 230,0.3)",
-            line=dict(color="rgba(255,255,255,0)"),
+            fillcolor="rgba(169, 169, 169, 0.3)",  # Light grey color
+            line=dict(color="rgba(255,255,255,0)", width=1),
             showlegend=False,
         ),
         row=row,
         col=col,
     )
+
     fig.update_layout(
         title=title,
         showlegend=False,
@@ -78,7 +81,7 @@ def plot_acf(
     alpha=0.05,
     bartlett_confint=True,
     missing="none",
-    title=None,
+    title="Autocorrelation Function (ACF)",
     fig=None,
     row=None,
     col=None,
@@ -93,8 +96,6 @@ def plot_acf(
         bartlett_confint=bartlett_confint,
         missing=missing,
     )
-
-    title = title or "Autocorrelation Function (ACF)"
 
     _plot(
         acf_values,
@@ -113,7 +114,7 @@ def plot_pacf(
     nlags=None,
     alpha=0.05,
     method="yw",
-    title=None,
+    title="Partial Autocorrelation Function (PACF)",
     fig=None,
     row=None,
     col=None,
@@ -124,8 +125,6 @@ def plot_pacf(
         alpha=alpha,
         method=method,
     )
-
-    title = title or "Partial Autocorrelation Function (PACF)"
 
     _plot(
         pacf_values,
@@ -149,13 +148,25 @@ def plot_acf_pacf(
     bartlett_confint=True,
     missing="none",
     pacf_method="yw",
-    title_acf=None,
-    title_pacf=None,
+    title=None,
+    title_acf="Autocorrelation Function (ACF)",
+    title_pacf="Partial Autocorrelation Function (PACF)",
     fig=None,
+    row=None,
 ):
-    fig = make_subplots(
-        rows=1, cols=2, subplot_titles=(title_acf, title_pacf), horizontal_spacing=0.1
-    )
+    if fig is None:
+        fig = make_subplots(
+            rows=1,
+            cols=2,
+            subplot_titles=(title_acf, title_pacf),
+            horizontal_spacing=0.1,
+        )
+        row = 1
+        fig.update_layout(
+            template="plotly_white",
+        )
+
+    row = row or 1
 
     fig = plot_acf(
         data,
@@ -166,9 +177,9 @@ def plot_acf_pacf(
         alpha=alpha,
         bartlett_confint=bartlett_confint,
         missing=missing,
-        title=title_acf or "Autocorrelation Function (ACF)",
+        title=None,
         fig=fig,
-        row=1,
+        row=row,
         col=1,
     )
 
@@ -177,10 +188,142 @@ def plot_acf_pacf(
         nlags=nlags,
         alpha=alpha,
         method=pacf_method,
-        title=title_pacf or "Partial Autocorrelation Function (PACF)",
+        title=None,
         fig=fig,
-        row=1,
+        row=row,
         col=2,
+    )
+    fig.update_layout(title=title)
+
+    return fig
+
+
+def plot_series_acf_pacf(
+    data,
+    adjusted=False,
+    nlags=None,
+    qstat=False,
+    fft=True,
+    alpha=0.05,
+    bartlett_confint=True,
+    missing="none",
+    pacf_method="yw",
+    title=None,
+    title_acf="Autocorrelation Function (ACF)",
+    title_pacf="Partial Autocorrelation Function (PACF)",
+    width=1200,
+    height=600,
+):
+    fig = make_subplots(
+        rows=2,
+        cols=2,
+        subplot_titles=(title, title_acf, title_pacf),
+        specs=[[{"colspan": 2}, None], [{}, {}]],
+        horizontal_spacing=0.1,
+    )
+    if isinstance(data, (pd.Series, pl.Series)):
+        x = np.arange(len(data))
+        y = data
+    else:
+        x = data["ds"]
+        y = data["y"]
+
+    fig.add_trace(
+        go.Scatter(
+            x=x,
+            y=y,
+            line=dict(color="black", width=1),
+        ),
+        row=1,
+        col=1,
+    )
+
+    plot_acf_pacf(
+        data=y,
+        adjusted=adjusted,
+        nlags=nlags,
+        qstat=qstat,
+        fft=fft,
+        alpha=alpha,
+        bartlett_confint=bartlett_confint,
+        missing=missing,
+        pacf_method=pacf_method,
+        fig=fig,
+        row=2,
+    )
+
+    fig.update_layout(
+        template="plotly_white",
+        font=dict(size=10),
+        width=width,
+        height=height,
+    )
+
+    return fig
+
+
+def plot_residuals_diagnostic(
+    residuals,
+    time,
+    adjusted=False,
+    nlags=None,
+    qstat=False,
+    fft=True,
+    alpha=0.05,
+    bartlett_confint=True,
+    missing="none",
+    width=1200,
+    height=600,
+):
+    fig = make_subplots(
+        rows=2,
+        cols=2,
+        subplot_titles=("Innovation Residuals", "ACF Plot", "Histogram"),
+        specs=[[{"colspan": 2}, None], [{}, {}]],
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=time,
+            y=residuals,
+            mode="lines",
+            name="Residuals",
+            line=dict(color="black", width=1),
+        ),
+        row=1,
+        col=1,
+    )
+
+    plot_acf(
+        data=residuals,
+        adjusted=adjusted,
+        nlags=nlags,
+        qstat=qstat,
+        fft=fft,
+        alpha=alpha,
+        bartlett_confint=bartlett_confint,
+        missing=missing,
+        title=None,
+        fig=fig,
+        row=2,
+        col=1,
+    )
+
+    fig.add_trace(
+        go.Histogram(
+            x=residuals,
+            nbinsx=30,
+            name="Residuals",
+            marker=dict(color="black", line=dict(color="black")),
+        ),
+        row=2,
+        col=2,
+    )
+
+    fig.update_layout(
+        template="plotly_white",
+        font=dict(size=10),
+        width=width,
+        height=height,
     )
 
     return fig
@@ -206,6 +349,7 @@ def plotly_series(
     ylabel: str | None = None,
     title: list[str] | str | None = None,
     legend: bool = True,
+    date_range: tuple[str, str] | None = None,
 ):
     fig = plot_series(
         df=df,
@@ -226,21 +370,24 @@ def plotly_series(
         engine="plotly",
     )
 
+    n_subplots = len(fig.layout.annotations) - 2
     if xlabel:
         fig.layout.annotations[-2].update(text=xlabel)
     if ylabel:
         fig.layout.annotations[-1].update(text=ylabel)
 
+    title = title or ""
     if isinstance(title, str):
-        title = [title] * len(fig.data)
+        title = [title] * n_subplots
 
-    assert len(fig.data) == len(title), "Length of title must match number of series"
+    assert n_subplots == len(title), "Length of title must match number of series"
 
     for i, t in enumerate(title):
         fig.layout.annotations[i].update(text=t)
 
-    fig.update_layout(
-        showlegend=legend,
-    )
+    if date_range:
+        fig.update_xaxes(type="date", range=date_range)
+
+    fig.update_layout(showlegend=legend)
 
     return fig
