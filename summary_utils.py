@@ -17,10 +17,9 @@ def print_arima_fitted_summary(fitted_model):
     """
     print(ARIMASummary(fitted_model))
     coefs = deepcopy(fitted_model["coef"])
-    coefs = {"itc": coefs.pop("intercept")} | coefs
     print("Coefficients:")
     for param, value in coefs.items():
-        print(f" {param}        : {value:.2f}")
+        print(f" {param}{(11 - len(param)) * ' '}: {value:.2f}")
     print(f"sigma^2     : {fitted_model['sigma2']:.2f}")
     print(f"loglik      : {fitted_model['loglik']:.2f}")
     print(f"aic         : {fitted_model['aic']:.2f}")

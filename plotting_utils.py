@@ -97,7 +97,7 @@ def plot_acf(
         missing=missing,
     )
 
-    _plot(
+    fig = _plot(
         acf_values,
         confidence_interval,
         title=title,
@@ -200,6 +200,7 @@ def plot_acf_pacf(
 
 def plot_series_acf_pacf(
     data,
+    time=None,
     adjusted=False,
     nlags=None,
     qstat=False,
@@ -227,6 +228,9 @@ def plot_series_acf_pacf(
     else:
         x = data["ds"]
         y = data["y"]
+
+    if time is not None:
+        x = time
 
     fig.add_trace(
         go.Scatter(
@@ -376,14 +380,14 @@ def plotly_series(
     if ylabel:
         fig.layout.annotations[-1].update(text=ylabel)
 
-    title = title or ""
-    if isinstance(title, str):
-        title = [title] * n_subplots
+    if title is not None:
+        if isinstance(title, str):
+            title = [title] * n_subplots
 
-    assert n_subplots == len(title), "Length of title must match number of series"
+        assert n_subplots == len(title), "Length of title must match number of series"
 
-    for i, t in enumerate(title):
-        fig.layout.annotations[i].update(text=t)
+        for i, t in enumerate(title):
+            fig.layout.annotations[i].update(text=t)
 
     if date_range:
         fig.update_xaxes(type="date", range=date_range)
