@@ -395,3 +395,37 @@ def plotly_series(
     fig.update_layout(showlegend=legend)
 
     return fig
+
+
+def plot_real_data_vs_insample_forecast(
+    y, y_hat, title: str | None = None, width=1200, height=400
+):
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=y,
+            y=y_hat,
+            mode="markers",
+            marker=dict(color="black"),
+            name="Fitted vs Actual",
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=[min(y), max(y)],
+            y=[min(y_hat), max(y_hat)],
+            mode="lines",
+            line=dict(dash="dash", color="blue"),
+            name="y = x",
+        )
+    )
+    fig.update_layout(
+        xaxis_title="Data (actual values)",
+        yaxis_title="Fitted (predicted values)",
+        title=title,
+        template="plotly_white",
+        width=width,
+        height=height,
+    )
+
+    return fig
