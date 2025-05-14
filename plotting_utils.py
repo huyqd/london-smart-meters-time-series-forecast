@@ -429,3 +429,85 @@ def plot_real_data_vs_insample_forecast(
     )
 
     return fig
+
+
+def plot_decomposition(
+    time, observed=None, seasonal=None, trend=None, resid=None, width=None, height=None
+):
+    """
+    Plots the decomposition output.
+    Supports multiple seasonalities if `seasonal` is a dict of {name: array} or multidim array.
+    """
+
+    series = []
+    if observed is not None:
+        series.append("Original")
+    if trend is not None:
+        series.append("Trend")
+    # Handle multiple seasonalities
+    seasonal_names = []
+    if isinstance(seasonal, np.ndarray) and seasonal.ndim > 1:
+        seasonal = {f"{i + 1}": seasonal[:, i] for i in range(seasonal.shape[1])}
+    if isinstance(seasonal, dict):
+        for k in seasonal:
+            series.append(f"Seasonal ({k})")
+            seasonal_names.append(k)
+    elif seasonal is not None:
+        series.append("Seasonal")
+        seasonal_names.append(None)
+    if resid is not None:
+        series.append("Residual")
+
+    if len(series) == 0:
+        raise ValueError(
+            "All component flags were off. Need at least one of the flags turned on to plot."
+        )
+
+    fig = make_subplots(
+        rows=len(series), cols=1, shared_xaxes=True, subplot_titles=series
+    )
+    x = time
+    row = 1
+    if observed is not None:
+        fig.add_trace(go.Scatter(x=x, y=observed, name="Original"), row=row, col=1)
+        row += 1
+    if trend is not None:
+        fig.add_trace(go.Scatter(x=x, y=trend, name="Trend"), row=row, col=1)
+        row += 1
+    if isinstance(seasonal, dict):
+        for k in seasonal_names:
+            fig.add_trace(
+                go.Scatter(x=x, y=seasonal[k], name=f"Seasonal {k}"),
+                row=row,
+                col=1,
+            )
+            row += 1
+    elif seasonal is not None:
+        fig.add_trace(
+            go.Scatter(x=x, y=seasonal, name="Seasonal"),
+            row=row,
+            col=1,
+        )
+        row += 1
+    if resid is not None:
+        fig.add_trace(go.Scatter(x=x, y=resid, name="Residual"), row=row, col=1)
+        row += 1
+
+    fig.update_layout(
+        title_text="Seasonal Trend Decomposition",
+        autosize=False,
+        width=width or 1200,
+        height=height or (200 * len(series) + 100),
+        title={"x": 0.5, "xanchor": "center", "yanchor": "top"},
+        legend_title=None,
+        showlegend=False,
+        legend=dict(
+            font=dict(size=15),
+            orientation="h",
+            yanchor="bottom",
+            y=0.98,
+            xanchor="right",
+            x=1,
+        ),
+    )
+    return fig
