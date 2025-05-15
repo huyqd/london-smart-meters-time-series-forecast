@@ -352,6 +352,8 @@ def plotly_series(
     xlabel: str | None = None,
     ylabel: str | None = None,
     title: list[str] | str | None = None,
+    width: int = 1200,
+    height: int = 500,
     legend: bool = True,
     date_range: tuple[str, str] | None = None,
 ):
@@ -392,7 +394,7 @@ def plotly_series(
     if date_range:
         fig.update_xaxes(type="date", range=date_range)
 
-    fig.update_layout(showlegend=legend)
+    fig.update_layout(showlegend=legend, width=width, height=height)
 
     return fig
 

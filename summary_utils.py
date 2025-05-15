@@ -123,7 +123,17 @@ def get_fitted_residuals(
     time_col: str = "ds",
     id_col: str = "unique_id",
 ):
-    insample_forecasts = fcst.forecast_fitted_values()
+    try:
+        insample_forecasts = fcst.forecast_fitted_values()
+    except Exception:
+        try:
+            insample_forecasts = fcst.cross_validation_fitted_values()
+        except Exception:
+            raise RuntimeError(
+                "Both forecast_fitted_values() and cross_validation_fitted_values() failed."
+                "Please run `forecast` method using `fitted=True`"
+            )
+
     model_names = [
         c for c in insample_forecasts.columns if c not in [target_col, time_col, id_col]
     ]
