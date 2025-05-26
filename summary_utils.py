@@ -8,6 +8,39 @@ from mlforecast import MLForecast
 from copy import deepcopy
 
 
+def print_ets_fitted_summary(fcst, model_alias="ETS", model_idx=0):
+    """
+    Print a summary of ETS fitted parameters and components.
+
+    Parameters
+    ----------
+    fit : StatsForecast
+        Fitted StatsForecast object (from .fit()).
+    model_alias : str
+        Alias/name of the model (for display).
+    """
+    # Extract model dictionary
+    model_dict = fcst.fitted_[0, model_idx].model_
+    params = model_dict
+    # Try to get parameter names
+    param_names = ["alpha", "beta", "gamma", "phi", "initial level", "initial trend"]
+    # Extract parameter values
+    par = params.get("par", params.get("x", []))
+    # Print model components string
+    components = params.get("components", None)
+    print(f"--- {model_alias} Model Summary ---")
+    if components:
+        print("Components:", components)
+    # Print parameters
+    if par is not None:
+        print("Fitted parameters:")
+        for name, value in zip(param_names, par):
+            print(f"  {name}: {value:.4f}")
+    else:
+        print("No parameter information found.")
+    print("-------------------------------")
+
+
 def print_arima_fitted_summary(fitted_model: Arima):
     """
     Print the summary of the fitted ARIMA model.
