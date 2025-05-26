@@ -513,3 +513,64 @@ def plot_decomposition(
         ),
     )
     return fig
+
+
+def plot_ets_components(
+    time,
+    observed=None,
+    level=None,
+    slope=None,
+    season=None,
+    resid=None,
+    title=None,
+    width=None,
+    height=None,
+):
+    """
+    Plots ETS decomposition components: observed, level, slope, season, residual.
+    """
+    series = []
+    if observed is not None:
+        series.append("Observed")
+    if level is not None:
+        series.append("Level")
+    if slope is not None:
+        series.append("Slope")
+    if season is not None:
+        series.append("Season")
+    if resid is not None:
+        series.append("Residual")
+
+    if len(series) == 0:
+        raise ValueError("At least one component must be provided to plot.")
+
+    fig = make_subplots(
+        rows=len(series), cols=1, shared_xaxes=True, subplot_titles=series
+    )
+    x = time
+    row = 1
+    if observed is not None:
+        fig.add_trace(go.Scatter(x=x, y=observed, name="Observed"), row=row, col=1)
+        row += 1
+    if level is not None:
+        fig.add_trace(go.Scatter(x=x, y=level, name="Level"), row=row, col=1)
+        row += 1
+    if slope is not None:
+        fig.add_trace(go.Scatter(x=x, y=slope, name="Slope"), row=row, col=1)
+        row += 1
+    if season is not None:
+        fig.add_trace(go.Scatter(x=x, y=season, name="Season"), row=row, col=1)
+        row += 1
+    if resid is not None:
+        fig.add_trace(go.Scatter(x=x, y=resid, name="Residual"), row=row, col=1)
+        row += 1
+
+    fig.update_layout(
+        title_text=title or "ETS Components",
+        autosize=False,
+        width=width or 1200,
+        height=height or (200 * len(series) + 100),
+        title={"x": 0.5, "xanchor": "center", "yanchor": "top"},
+        showlegend=False,
+    )
+    return fig
