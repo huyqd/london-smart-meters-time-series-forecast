@@ -1,3 +1,17 @@
+"""
+plotting_utils.py
+-----------------
+Utility functions for time series plotting and diagnostics using Plotly.
+
+This module provides functions for visualizing time series data, including:
+    - ACF/PACF plots
+    - Residual diagnostics
+    - Series and forecast visualization
+    - Decomposition and ETS component plots
+
+Dependencies: numpy, pandas, polars, plotly, statsmodels, utilsforecast
+"""
+
 import polars as pl
 import pandas as pd
 import numpy as np
@@ -5,16 +19,20 @@ from plotly.subplots import make_subplots
 from statsmodels.tsa.stattools import acf, pacf
 import plotly.graph_objects as go
 from utilsforecast.plotting import plot_series, DFType
+from typing import Optional, Union, Any
 
 
 def _plot(
     values: np.ndarray,
     confidence_interval: np.ndarray,
     title: str,
-    fig=None,
-    row=None,
-    col=None,
-):
+    fig: Optional[go.Figure] = None,
+    row: Optional[int] = None,
+    col: Optional[int] = None,
+) -> go.Figure:
+    """
+    Helper function to plot values with confidence intervals as vertical lines and shaded area.
+    """
     if fig is None:
         fig = make_subplots()
 
@@ -73,19 +91,22 @@ def _plot(
 
 
 def plot_acf(
-    data,
-    adjusted=False,
-    nlags=None,
-    qstat=False,
-    fft=True,
-    alpha=0.05,
-    bartlett_confint=True,
-    missing="none",
-    title="Autocorrelation Function (ACF)",
-    fig=None,
-    row=None,
-    col=None,
-):
+    data: Any,
+    adjusted: bool = False,
+    nlags: Optional[int] = None,
+    qstat: bool = False,
+    fft: bool = True,
+    alpha: float = 0.05,
+    bartlett_confint: bool = True,
+    missing: str = "none",
+    title: str = "Autocorrelation Function (ACF)",
+    fig: Optional[go.Figure] = None,
+    row: Optional[int] = None,
+    col: Optional[int] = None,
+) -> go.Figure:
+    """
+    Plot the autocorrelation function (ACF) for a time series.
+    """
     acf_values, confidence_interval = acf(
         data,
         adjusted=adjusted,
@@ -110,15 +131,18 @@ def plot_acf(
 
 
 def plot_pacf(
-    data,
-    nlags=None,
-    alpha=0.05,
-    method="yw",
-    title="Partial Autocorrelation Function (PACF)",
-    fig=None,
-    row=None,
-    col=None,
-):
+    data: Any,
+    nlags: Optional[int] = None,
+    alpha: float = 0.05,
+    method: str = "yw",
+    title: str = "Partial Autocorrelation Function (PACF)",
+    fig: Optional[go.Figure] = None,
+    row: Optional[int] = None,
+    col: Optional[int] = None,
+) -> go.Figure:
+    """
+    Plot the partial autocorrelation function (PACF) for a time series.
+    """
     pacf_values, confidence_interval = pacf(
         data,
         nlags=nlags,
@@ -139,21 +163,24 @@ def plot_pacf(
 
 
 def plot_acf_pacf(
-    data,
-    adjusted=False,
-    nlags=None,
-    qstat=False,
-    fft=True,
-    alpha=0.05,
-    bartlett_confint=True,
-    missing="none",
-    pacf_method="yw",
-    title=None,
-    title_acf="Autocorrelation Function (ACF)",
-    title_pacf="Partial Autocorrelation Function (PACF)",
-    fig=None,
-    row=None,
-):
+    data: Any,
+    adjusted: bool = False,
+    nlags: Optional[int] = None,
+    qstat: bool = False,
+    fft: bool = True,
+    alpha: float = 0.05,
+    bartlett_confint: bool = True,
+    missing: str = "none",
+    pacf_method: str = "yw",
+    title: Optional[str] = None,
+    title_acf: str = "Autocorrelation Function (ACF)",
+    title_pacf: str = "Partial Autocorrelation Function (PACF)",
+    fig: Optional[go.Figure] = None,
+    row: Optional[int] = None,
+) -> go.Figure:
+    """
+    Plot both ACF and PACF for a time series in a single figure.
+    """
     if fig is None:
         fig = make_subplots(
             rows=1,
@@ -199,22 +226,25 @@ def plot_acf_pacf(
 
 
 def plot_series_acf_pacf(
-    data,
-    time=None,
-    adjusted=False,
-    nlags=None,
-    qstat=False,
-    fft=True,
-    alpha=0.05,
-    bartlett_confint=True,
-    missing="none",
-    pacf_method="yw",
-    title=None,
-    title_acf="Autocorrelation Function (ACF)",
-    title_pacf="Partial Autocorrelation Function (PACF)",
-    width=1200,
-    height=600,
-):
+    data: Any,
+    time: Optional[Any] = None,
+    adjusted: bool = False,
+    nlags: Optional[int] = None,
+    qstat: bool = False,
+    fft: bool = True,
+    alpha: float = 0.05,
+    bartlett_confint: bool = True,
+    missing: str = "none",
+    pacf_method: str = "yw",
+    title: Optional[str] = None,
+    title_acf: str = "Autocorrelation Function (ACF)",
+    title_pacf: str = "Partial Autocorrelation Function (PACF)",
+    width: int = 1200,
+    height: int = 600,
+) -> go.Figure:
+    """
+    Plot the time series, ACF, and PACF in a 2x2 subplot layout.
+    """
     fig = make_subplots(
         rows=2,
         cols=2,
@@ -267,18 +297,21 @@ def plot_series_acf_pacf(
 
 
 def plot_residuals_diagnostic(
-    residuals,
-    time,
-    adjusted=False,
-    nlags=None,
-    qstat=False,
-    fft=True,
-    alpha=0.05,
-    bartlett_confint=True,
-    missing="none",
-    width=1200,
-    height=600,
-):
+    residuals: np.ndarray,
+    time: Any,
+    adjusted: bool = False,
+    nlags: Optional[int] = None,
+    qstat: bool = False,
+    fft: bool = True,
+    alpha: float = 0.05,
+    bartlett_confint: bool = True,
+    missing: str = "none",
+    width: int = 1200,
+    height: int = 600,
+) -> go.Figure:
+    """
+    Plot residual diagnostics: residuals, ACF, and histogram.
+    """
     fig = make_subplots(
         rows=2,
         cols=2,
@@ -334,29 +367,32 @@ def plot_residuals_diagnostic(
 
 
 def plotly_series(
-    df: DFType | None = None,
-    forecasts_df: DFType | None = None,
-    ids: list[str] | None = None,
+    df: Optional[DFType] = None,
+    forecasts_df: Optional[DFType] = None,
+    ids: Optional[list[str]] = None,
     plot_random: bool = True,
     max_ids: int = 8,
-    models: list[str] | None = None,
-    level: list[float] | None = None,
-    max_insample_length: int | None = None,
+    models: Optional[list[str]] = None,
+    level: Optional[list[float]] = None,
+    max_insample_length: Optional[int] = None,
     plot_anomalies: bool = False,
-    palette: str | None = None,
+    palette: Optional[str] = None,
     id_col: str = "unique_id",
     time_col: str = "ds",
     target_col: str = "y",
     seed: int = 0,
-    resampler_kwargs: dict | None = None,
-    xlabel: str | None = None,
-    ylabel: str | None = None,
-    title: list[str] | str | None = None,
+    resampler_kwargs: Optional[dict] = None,
+    xlabel: Optional[str] = None,
+    ylabel: Optional[str] = None,
+    title: Optional[Union[list[str], str]] = None,
     width: int = 1200,
     height: int = 500,
     legend: bool = True,
-    date_range: tuple[str, str] | None = None,
-):
+    date_range: Optional[tuple[str, str]] = None,
+) -> go.Figure:
+    """
+    Plot time series and forecasts using Plotly, with support for multiple series and models.
+    """
     fig = plot_series(
         df=df,
         forecasts_df=forecasts_df,
@@ -400,8 +436,15 @@ def plotly_series(
 
 
 def plot_real_data_vs_insample_forecast(
-    y, y_hat, title: str | None = None, width=1200, height=400
-):
+    y: Any,
+    y_hat: Any,
+    title: Optional[str] = None,
+    width: int = 1200,
+    height: int = 400,
+) -> go.Figure:
+    """
+    Plot actual vs fitted values for in-sample forecast diagnostics.
+    """
     fig = go.Figure()
     fig.add_trace(
         go.Scatter(
@@ -434,8 +477,18 @@ def plot_real_data_vs_insample_forecast(
 
 
 def plot_decomposition(
-    time, observed=None, seasonal=None, trend=None, resid=None, width=None, height=None
-):
+    time: Any,
+    observed: Optional[np.ndarray] = None,
+    seasonal: Optional[Union[np.ndarray, dict]] = None,
+    trend: Optional[np.ndarray] = None,
+    resid: Optional[np.ndarray] = None,
+    width: Optional[int] = None,
+    height: Optional[int] = None,
+) -> go.Figure:
+    """
+    Plots the decomposition output.
+    Supports multiple seasonalities if `seasonal` is a dict of {name: array} or multidim array.
+    """
     """
     Plots the decomposition output.
     Supports multiple seasonalities if `seasonal` is a dict of {name: array} or multidim array.
@@ -516,16 +569,19 @@ def plot_decomposition(
 
 
 def plot_ets_components(
-    time,
-    observed=None,
-    level=None,
-    slope=None,
-    season=None,
-    resid=None,
-    title=None,
-    width=None,
-    height=None,
-):
+    time: Union[np.ndarray, list],
+    observed: Optional[np.ndarray] = None,
+    level: Optional[np.ndarray] = None,
+    slope: Optional[np.ndarray] = None,
+    season: Optional[np.ndarray] = None,
+    resid: Optional[np.ndarray] = None,
+    title: Optional[str] = None,
+    width: Optional[int] = None,
+    height: Optional[int] = None,
+) -> go.Figure:
+    """
+    Plots ETS decomposition components: observed, level, slope, season, residual.
+    """
     """
     Plots ETS decomposition components: observed, level, slope, season, residual.
     """
