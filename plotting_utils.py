@@ -126,6 +126,7 @@ def plot_acf(
         row=row,
         col=col,
     )
+    fig.update_layout(template="plotly_white")
 
     return fig
 

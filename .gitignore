@@ -176,3 +176,4 @@ cython_debug/
 .venv
 data
 .DS_Store
+__pycache__
