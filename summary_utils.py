@@ -168,14 +168,17 @@ def get_fitted_residuals(
             )
 
     model_names = [
-        c for c in insample_forecasts.columns if c not in [target_col, time_col, id_col]
+        c
+        for c in insample_forecasts.columns
+        if c not in [target_col, time_col, id_col, "fold"]
     ]
 
     if isinstance(insample_forecasts, pd.DataFrame):
         residuals = insample_forecasts.copy(deep=True)
         residuals[model_names] = residuals[model_names].sub(
             insample_forecasts[target_col], axis=0
-        )[[time_col, id_col] + model_names]
+        )
+        residuals = residuals[[time_col, id_col] + model_names]
     elif isinstance(insample_forecasts, pl.DataFrame):
         residuals = insample_forecasts.select(
             time_col, id_col, pl.col(model_names) - pl.col(target_col)
