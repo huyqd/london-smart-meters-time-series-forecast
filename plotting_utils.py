@@ -20,6 +20,7 @@ from statsmodels.tsa.stattools import acf, pacf
 import plotly.graph_objects as go
 from utilsforecast.plotting import plot_series, DFType
 from typing import Optional, Union, Any
+import plotly.express as px
 
 
 def _plot(
@@ -631,3 +632,95 @@ def plot_ets_components(
         showlegend=False,
     )
     return fig
+
+
+def plot_data_availability_heatmap(
+    data,
+    time_col="ds",
+    id_col="unique_id",
+    target_col="y",
+    height=800,
+    width=1000,
+    title="Heatmap of data availability (missing data in white)",
+    id_orders: Optional[Union[list, pl.DataFrame, pl.Series]] = None,
+):
+    pivot_data = (
+        data.pivot(index=time_col, on=id_col, values=target_col)
+        .to_pandas()
+        .set_index(time_col)
+        .notnull()
+        .astype(int)
+    )
+
+    colorscale = [[0, "white"], [1, "green"]]
+
+    if id_orders is not None:
+        if isinstance(id_orders, pl.DataFrame):
+            id_orders = id_orders.get_column(id_col).to_list()
+        elif isinstance(id_orders, pl.Series):
+            id_orders = id_orders.to_list()
+
+        pivot_data = pivot_data[id_orders]
+
+    fig = go.Figure(
+        data=go.Heatmap(
+            z=pivot_data.values,  # The data matrix
+            x=pivot_data.columns,  # Column labels
+            y=pivot_data.index,  # Row labels (Dates)
+            colorscale=colorscale,
+            showscale=False,  # No color bar needed for binary presence/absence
+            xgap=0.5,  # Small gap between columns
+            ygap=0.5,  # Small gap between rows
+        )
+    )
+    # Turn off grid lines for a cleaner look
+    fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(showgrid=False)
+
+    fig.update_layout(
+        height=height,
+        width=width,
+        title_text=title,
+        margin=dict(l=50, r=50, t=80, b=50),  # Adjust margins,
+        template="plotly_white",
+    )
+    fig.show()
+
+
+def plot_missing_percentage(
+    data,
+    id_col="unique_id",
+    target_col="y",
+    height=800,
+    width=1000,
+    title="Percentage of Missing Data per ID",
+    id_orders=None,
+):
+    missing_percentage = data.group_by(id_col).agg(
+        pl.col(target_col).is_null().sum().truediv(pl.len()).mul(100).round(2)
+    )
+
+    if id_orders is not None:
+        if not isinstance(id_orders, pl.DataFrame):
+            id_orders = pl.DataFrame({id_col: id_orders})
+
+        missing_percentage = id_orders.join(missing_percentage, on=id_col, how="left")
+
+    fig = px.bar(
+        missing_percentage,
+        x=id_col,
+        y=target_col,
+        title=title,
+        text_auto=True,
+        labels={target_col: "Missing Data Percentage (%)"},
+    )
+
+    # Adjust the color bar to red, set the template to 'plotly_white', and specify height and width
+    fig.update_traces(marker_color="red")
+    fig.update_layout(
+        template="plotly_white",
+        height=height,
+        width=width,
+        margin=dict(l=50, r=50, t=80, b=50),
+    )  # Adjust margins
+    fig.show()
